@@ -4,7 +4,7 @@
 const cheerio = require('cheerio')
 const moment = require('moment-timezone')
 const request = require('request')
-const url = require('url')
+// const url = require('url')
 
 const {log, baseKonnector, filterExisting, saveDataAndFile, models} = require('cozy-konnector-libs')
 const Bill = models.bill
@@ -74,7 +74,7 @@ function logIn (requiredFields, entries, data, next) {
 }
 
 function getOrderPage (requiredFields, entries, data, next) {
-  const url = 'https://espace-client.voyages-sncf.com/espaceclient/ordersconsultation/showOrdersForAjaxRequest?pastOrder=false&pageToLoad=1'
+  const url = 'https://espace-client.voyages-sncf.com/espaceclient/ordersconsultation/showOrdersForAjaxRequest?pastOrder=true&pageToLoad=1'
 
   log('info', 'Download orders HTML page...')
   getPage(url, (err, res, body) => {
@@ -105,7 +105,8 @@ function parseOrderPage (requiredFields, entries, data, next) {
       amount: orderInformations.amount,
       vendor: 'VOYAGES SNCF',
       type: 'transport',
-      content: `${orderInformations.label} - ${orderInformations.reference}`
+      content: `${orderInformations.label} - ${orderInformations.reference}`,
+      pdfurl: orderInformations.pdfurl
     }
 
     entries.bills.fetched.push(bill)
@@ -143,13 +144,15 @@ function parseOrderRow ($, $row) {
                      .trim()
                      .replace(' €', '')
 
+  const pdfurl = $row.find('.commande__detail a').eq(0).attr('href')
+
   const $link = $row.find('.commande__bas a')
   // Boolean, the order is not always a travel (could be a discount card...)
   const isTravel = $link.text().trim().indexOf('voyage') !== -1
-  const link = $link.attr('href')
+  // const link = $link.attr('href')
 
   // Parse query string to get the owner name
-  const owner = url.parse(link, true).query.ownerName
+  // const owner = url.parse(link, true).query.ownerName
 
   return {
     reference,
@@ -157,7 +160,8 @@ function parseOrderRow ($, $row) {
     date,
     amount,
     isTravel,
-    owner
+    // owner,
+    pdfurl
   }
 }
 
