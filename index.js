@@ -20,6 +20,7 @@ module.exports = new BaseKonnector(function fetch (fields) {
     dateDelta: 10,
     amountDelta: 0.1
   }))
+  .catch(err => console.log(err, 'error caught'))
 })
 
 function logIn (fields) {
