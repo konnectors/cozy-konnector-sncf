@@ -10,34 +10,24 @@
   "author": "",
   "license": "AGPL-3.0",
   "dependencies": {
-    "cheerio": "^1.0.0-rc.1",
-    "cozy-konnector-libs": "^2.5.6",
-    "moment-timezone": "^0.5.13",
-    "request": "^2.81.0"
+    "cozy-konnector-libs": "^3.0.0",
+    "moment-timezone": "^0.5.13"
   },
   "scripts": {
     "start": "node index.js",
-    "oauth": "env-cmd ./data/env.js cozy-authenticate manifest.konnector",
-    "predev": "npm run oauth && env-cmd ./data/env.js cozy-init-dev-account ./data/account.txt ./data/env_fields.json",
-    "dev": "env-cmd ./data/env_development.js npm start",
-    "standalone": "env-cmd ./data/env_standalone.js npm start",
+    "dev": "cozy-konnector-dev",
+    "standalone": "cozy-konnector-standalone",
+    "standalone:record": "REPLAY=record cozy-konnector-standalone",
+    "standalone:replay": "REPLAY=replay cozy-konnector-standalone",
     "build": "webpack",
     "lint": "standard --fix konnector.js",
     "deploy:travis": "git-directory-deploy --username Cozy --email contact@cozycloud.cc --directory build/ --repo=https://$GITHUB_TOKEN@github.com/cozy/cozy-konnector-sncf.git",
-    "deploy": "git-directory-deploy --directory build/ --branch build --repo=https://github.com/<USERNAME_GH>/<SLUG_GH>.git"
+    "deploy": "git-directory-deploy --directory build/ --branch build --repo=https://github.com/cozy/cozy-konnector-sncf.git"
   },
   "devDependencies": {
     "copy-webpack-plugin": "^4.0.1",
-    "cz-conventional-changelog": "^2.0.0",
-    "env-cmd": "^5.1.0",
     "git-directory-deploy": "^1.5.1",
-    "request-debug": "^0.2.0",
     "standard": "^10.0.2",
     "webpack": "^2.5.1"
-  },
-  "config": {
-    "commitizen": {
-      "path": "./node_modules/cz-conventional-changelog"
-    }
   }
 }

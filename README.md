@@ -138,7 +138,7 @@ yarn lint
 
 ### Maintainer
 
-The lead maintainers for this konnector is Chocobozzz
+The lead maintainers for this konnector is doubleface
 
 
 ### Get in touch
