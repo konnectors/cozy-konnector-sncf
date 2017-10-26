@@ -11,7 +11,7 @@ let rq = request({
 })
 
 module.exports = new BaseKonnector(function fetch (fields) {
-  return logIn(fields)
+  return logIn.call(this, fields)
   .then(() => getOrderPage())
   .then($ => parseOrderPage($))
   .then(entries => saveBills(entries, fields.folderPath, {
@@ -36,12 +36,12 @@ function logIn (fields) {
   })
   .catch(err => {
     log('debug', err.message, 'Login error')
-    throw new Error('LOGIN_FAILED')
+    this.terminate('LOGIN_FAILED')
   })
   .then(body => {
     if (body.error) {
       log('debug', `${body.error.code}: ${body.error.libelle}`)
-      throw new Error('LOGIN_FAILED')
+      this.terminate('LOGIN_FAILED')
     }
   })
 }
