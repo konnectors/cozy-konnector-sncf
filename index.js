@@ -1,6 +1,7 @@
 'use strict'
 
 const moment = require('moment-timezone')
+const bluebird = require('bluebird')
 
 const {log, BaseKonnector, saveBills, request} = require('cozy-konnector-libs')
 let rq = request({
@@ -11,10 +12,18 @@ let rq = request({
 })
 
 module.exports = new BaseKonnector(function fetch (fields) {
+  let entries = []
   return logIn.call(this, fields)
-  .then(() => getOrderPage())
+  .then(() => getCurrentOrders())
+  .then(result => {
+    entries = entries.concat(result)
+  })
+  .then(() => getPastOrderPage())
   .then($ => parseOrderPage($))
-  .then(entries => saveBills(entries, fields.folderPath, {
+  .then(result => {
+    entries = entries.concat(result)
+  })
+  .then(() => saveBills(entries, fields.folderPath, {
     timeout: Date.now() + 60 * 1000,
     identifiers: 'SNCF',
     dateDelta: 10,
@@ -46,14 +55,66 @@ function logIn (fields) {
   })
 }
 
-function getOrderPage (requiredFields, entries, data, next) {
+function getPastOrderPage () {
   rq = request({
     json: false,
     cheerio: true
   })
 
-  log('info', 'Download orders HTML page...')
+  log('info', 'Download past orders HTML page...')
   return rq('https://espace-client.voyages-sncf.com/espaceclient/ordersconsultation/showOrdersForAjaxRequest?pastOrder=true&pageToLoad=1')
+}
+
+function getCurrentOrders () {
+  rq = request({
+    json: true,
+    cheerio: false
+  })
+
+  log('info', 'Download current orders ...')
+  return rq('https://secure.voyages-sncf.com/espaceclient/ordersconsultation/getCurrentUserOrders')
+  .then(body => {
+    return bluebird.mapSeries(body.trainOrderList, trainOrder => {
+      const code = Object.keys(trainOrder.pnrsAndReceipt).pop()
+      return rq(`https://www.voyages-sncf.com/vsa/api/order/fr_FR/${trainOrder.owner}/${code}?source=vsa`)
+      .then(body => {
+        let creationDate = body.order.trainFolders[code].creationDate
+        creationDate = creationDate
+          .replace(/-/g, '')
+          .replace(/T/g, '')
+          .replace(/:/g, '')
+        creationDate = creationDate.substr(0, creationDate.length - 2)
+        const date = new Date(trainOrder.outwardDate)
+        return {
+          date,
+          amount: trainOrder.amount,
+          vendor: 'VOYAGES SNCF',
+          type: 'transport',
+          content: `${trainOrder.originLabel}/${trainOrder.destinationLabel} - ${code}`,
+          fileurl: 'https://ebillet.voyages-sncf.com/ticketingServices/public/e-ticket/',
+          filename: getFileName(moment(date), '_ebillet'),
+          requestOptions: {
+            method: 'POST',
+            headers: {
+              Accept: 'application/json, text/plain, */*'
+            },
+            body: {
+              lang: 'FR',
+              pnrRefs: [
+                {
+                  pnrLocator: code,
+                  creationDate: creationDate,
+                  passengerName: trainOrder.owner
+                }
+              ],
+              market: 'VSC',
+              caller: 'VSA_FR'
+            }
+          }
+        }
+      })
+    })
+  })
 }
 
 function parseOrderPage ($) {
@@ -62,7 +123,6 @@ function parseOrderPage ($) {
   const $rows = $('.commande')
   $rows.each(function eachRow () {
     const $row = $(this)
-
     const orderInformations = parseOrderRow($, $row)
 
     const date = moment(orderInformations.date, 'DD/MM/YY')
@@ -80,7 +140,6 @@ function parseOrderPage ($) {
         filename: getFileName(date)
       })
     }
-
     result.push(bill)
   })
   return result
@@ -127,6 +186,6 @@ function parseOrderRow ($, $row) {
   return result
 }
 
-function getFileName (date) {
-  return `${moment(date).format('YYYYMMDD')}_sncf.pdf`
+function getFileName (date, suffix = '') {
+  return `${moment(date).format('YYYYMMDD')}${suffix}_sncf.pdf`
 }
