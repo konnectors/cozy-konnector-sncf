@@ -48,7 +48,7 @@ function logIn (fields) {
     this.terminate('LOGIN_FAILED')
   })
   .then(body => {
-    if (body.error) {
+    if (body && body.error) {
       log('debug', `${body.error.code}: ${body.error.libelle}`)
       this.terminate('LOGIN_FAILED')
     }
