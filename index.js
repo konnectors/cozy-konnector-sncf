@@ -53995,35 +53995,41 @@ function getCurrentOrders () {
       } else {
         return rq(`https://www.oui.sncf/vsa/api/order/fr_FR/${trainOrder.owner}/${code}?source=vsa`)
         .then(body => {
-          let creationDate = body.order.trainFolders[code].creationDate
-          creationDate = creationDate
-            .replace(/-/g, '')
-            .replace(/T/g, '')
-            .replace(/:/g, '')
-          creationDate = creationDate.substr(0, creationDate.length - 2)
+          log('debug', body.order.trainFolders[code].deliveryMode, 'delivery mode')
 
-          Object.assign(entry, {
-            fileurl: 'https://ebillet.oui.sncf/ticketingServices/public/e-ticket/',
-            filename: getFileName(moment(date), '_ebillet'),
-            requestOptions: {
-              method: 'POST',
-              headers: {
-                Accept: 'application/json, text/plain, */*'
-              },
-              body: {
-                lang: 'FR',
-                pnrRefs: [
-                  {
-                    pnrLocator: code,
-                    creationDate: creationDate,
-                    passengerName: trainOrder.owner
-                  }
-                ],
-                market: 'VSC',
-                caller: 'VSA_FR'
+          // TKD seems to correspond to ebillet but maybe there are other types of delivery modes
+          // which allow to download a file
+          if (body.order.trainFolders[code].deliveryMode.type === 'TKD') {
+            let creationDate = body.order.trainFolders[code].creationDate
+            creationDate = creationDate
+              .replace(/-/g, '')
+              .replace(/T/g, '')
+              .replace(/:/g, '')
+            creationDate = creationDate.substr(0, creationDate.length - 2)
+
+            Object.assign(entry, {
+              fileurl: 'https://ebillet.voyages-sncf.com/ticketingServices/public/e-ticket/',
+              filename: getFileName(moment(date), '_ebillet'),
+              requestOptions: {
+                method: 'POST',
+                headers: {
+                  Accept: 'application/json, text/plain, */*'
+                },
+                body: {
+                  lang: 'FR',
+                  pnrRefs: [
+                    {
+                      pnrLocator: code,
+                      creationDate: creationDate,
+                      passengerName: trainOrder.owner
+                    }
+                  ],
+                  market: 'VSC',
+                  caller: 'VSA_FR'
+                }
               }
-            }
-          })
+            })
+          }
 
           return entry
         })
