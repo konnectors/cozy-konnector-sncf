@@ -54046,7 +54046,7 @@ function parseOrderPage ($) {
     const $row = $(this)
     const orderInformations = parseOrderRow($, $row)
 
-    const date = moment(orderInformations.date, 'DD/MM/YY')
+    const date = moment(orderInformations.date, 'DD/MM/YYYY')
     const bill = {
       date: date.toDate(),
       amount: parseFloat(orderInformations.amount),
