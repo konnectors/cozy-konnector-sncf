@@ -107,6 +107,7 @@ function getCurrentOrders () {
               filename: getFileName(moment(date), '_ebillet'),
               requestOptions: {
                 method: 'POST',
+                json: true,
                 headers: {
                   Accept: 'application/json, text/plain, */*'
                 },
