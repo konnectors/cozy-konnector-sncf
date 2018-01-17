@@ -3,8 +3,8 @@
 const moment = require('moment-timezone')
 const bluebird = require('bluebird')
 
-const {log, BaseKonnector, saveBills, request} = require('cozy-konnector-libs')
-let rq = request({
+const {log, BaseKonnector, saveBills, requestFactory} = require('cozy-konnector-libs')
+let rq = requestFactory({
   // debug: true,
   cheerio: false,
   json: true,
@@ -56,7 +56,7 @@ function logIn (fields) {
 }
 
 function getPastOrderPage () {
-  rq = request({
+  rq = requestFactory({
     json: false,
     cheerio: true
   })
@@ -66,7 +66,7 @@ function getPastOrderPage () {
 }
 
 function getCurrentOrders () {
-  rq = request({
+  rq = requestFactory({
     json: true,
     cheerio: false
   })
