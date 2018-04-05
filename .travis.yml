@@ -33,6 +33,6 @@ deploy:
   - provider: script
     repo: konnectors/cozy-konnector-sncf
     skip-cleanup: true
-    script: env DEPLOY_BRANCH=latest yarn deploy
+    script: DEPLOY_BRANCH=latest yarn deploy
     on:
       branch: prod
