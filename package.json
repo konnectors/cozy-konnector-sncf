@@ -22,8 +22,7 @@
     "standalone:replay": "REPLAY=replay cozy-konnector-standalone",
     "build": "webpack",
     "lint": "standard --fix konnector.js",
-    "deploy:travis": "git-directory-deploy --username Cozy --email contact@cozycloud.cc --directory build/ --repo=https://$GITHUB_TOKEN@github.com/cozy/cozy-konnector-sncf.git",
-    "deploy": "git-directory-deploy --directory build/ --branch build --repo=https://github.com/cozy/cozy-konnector-sncf.git"
+    "deploy": "git-directory-deploy --directory build/ --branch ${DEPLOY_BRANCH:-build} --repo=${DEPLOY_REPOSITORY:https://$GITHUB_TOKEN@github.com/cozy/cozy-konnector-sncf.git}"
   },
   "devDependencies": {
     "copy-webpack-plugin": "4.5.1",
