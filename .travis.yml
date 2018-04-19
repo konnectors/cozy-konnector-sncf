@@ -10,6 +10,8 @@ env:
   global:
     # GITHUB_TOKEN from ptbrowne, regenerate with travis encrypt GITHUB_TOKEN=yourtoken
   - secure: P+62CYtJ3tfwjvf83ihjJOwVLFfjtNlKX2PBcv2hQkW5mGk3+jDMzDeTQWd1k8+fhY0DJjK009iAYwSjK4ABrXFe0umE1PEBHYcwnz7d81Rzl0eVmx6V7r+HdnysG/9WqLTMuC8K7rl2AWpQDqARF6aNsKb/1tK3zNKa4rTU1PeJOWH9o67Ja5YR3YW8nhJ7mfOC0xCytkLRdmnaeYntkbBG0YzNcsFXyG/h6vGvX6ZBdHF6se6o/uXECoe3jYevGH+v7LZjn+vXckOkWyjEy41e+jKmksF73BSD3QweI6RnzRbTMcGholrZbfrr8kWpEiqWelGR1MuLNX3ydDvC1d3W2d+4VwjjzCy/OamcJoSJUxY6Wq5rgj5ComsZ2T+N75GTrN126RuLvm2Y0yi5Q/TAtrhhL6r7Z7H2CrMpZaGGXg3aSRrslQmH2OIPeFv88KZexHszoJzxdUj3EZ5EnfyivWuRcxohzgwbm+jTUOUkg0Uhj+sRVr7V9DR4i4j4YowtBGcTXep4R79ZbvrMNzoYbMawfoOJ9KFHPCAgXwZ4/OqfnVQFyya5R0mgbgRrdaSLZ5mi5p8rXMoQLmk1iD9yKpKzpdMEX8dCsw3bRVgiNCTrtdpXOn8zKEGxrDmQ8CbETK8lpXBcoVRxpSldP2heGVQLPkM8sOmWOXBdhKI=
+  # REGISTRY_TOKEN
+  - secure: QowTq5oIPS6/0wXmgRu2s/P73H1zzRewyFE4rNpkXYj4ZWqBVYeXLQkL0IfBM/y2kQt8l93wKq8w9ALvbzKIA56zjq4iXB1yClRBfvW1hzUVXIMOhfYZagY8MKl+NPJczON8pyqhEiU8cFvTgW6zj/coPeZYjIPg4LmpECfANCKpDhX+gI8+PqBYtPdSG49+vnf7P1I4QPmQ2PfJvRlSnwpp1ScS/rZCXym56K3wD2TrUdDNobqNQbHwWtloQmYMWMjYM/S6dvCrMuNSIZJ++ErjtSezWe4h+icR0AECFg4dzimib/1yhYH/T8m0r6ZvZSDajN3WzU3BmRaFzn/4Xomw/pLy6VPbiVzVZfVLGzpFrLZINI44lq8dgKGt6466f1CS1mdFyws4a9CsDDN30CkoSg7NNyrjBBLrhwYBRBaceesX7hZh6UjLlWybDcS0o/VYTrympjCWc3xmhaeOUTuRw6ecsz+yJva0eLNZ7MMS5N50obqDDY18gDvB5dI9gAdiWKzZhTwUMEjAxH9wHEV4amaLD6t/xYkroxvNtaaw2by3Apm8KjNCwiEBqg3c/2U/i68zNW8WHT6HhMhHfQ4GqutFoNwBkOCOy4lS75+N86jOVXTKHsLjZ4uQH2nP27wgOd/6o1L+H2pAdBZ8tYXLZtmcdX10s4JxucmD/tU=
 cache:
   yarn: true
   directories:
@@ -20,12 +22,12 @@ deploy:
 - provider: script
   repo: konnectors/cozy-konnector-sncf
   skip-cleanup: true
-  script: yarn deploy
+  script: DEPLOY_BRANCH=build && yarn deploy && yarn cozyPublish
   on:
     branch: master
 - provider: script
   repo: konnectors/cozy-konnector-sncf
   skip-cleanup: true
-  script: DEPLOY_BRANCH=latest yarn deploy
+  script: DEPLOY_BRANCH=build && yarn deploy && yarn cozyPublish
   on:
-    branch: prod
+    tags: true
