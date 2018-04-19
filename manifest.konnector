@@ -1,33 +1,32 @@
 {
   "version": "1.0.0",
-  "name": "Voyage-Sncf",
-  "type": "node",
+  "name": "Oui.sncf",
+  "type": "konnector",
+  "language": "node",
+  "icon": "sncf.svg",
   "slug": "sncf",
-  "source": "git://github.com/cozy/cozy-konnector-sncf.git",
+  "source": "git://github.com/konnectors/cozy-konnector-sncf.git#build",
+  "editor": "Cozy",
+  "vendor_link": "https://www.oui.sncf",
+  "categories": ["transport"],
+  "screenshots": [],
   "fields": {
-    "save_folder": {
-      "doctype": "io.cozy.files",
-      "type": "folder"
+    "login": {
+      "type": "text"
     },
-    "account": {
-      "doctype": "io.cozy.accounts",
-      "account_type": "accounttype",
-      "accountFormat": "login,password"
-    }
-  },
-  "locales": {
-    "fr": {
-      "description": "Récupère toutes vos factures",
-      "permissions": {
-        "bills": {
-          "description": "Utilisé pour sauvegarder les données de facturation"
-        },
-        "files": {
-          "description": "Utilisé pour sauvegarder les factures"
-        }
+    "password": {
+      "type": "password"
+    },
+    "advancedFields": {
+      "folderPath": {
+        "advanced": true,
+        "isRequired": false
       }
     }
   },
+  "data_types": [
+    "bill"
+  ],
   "permissions": {
     "bank operations": {
       "description": "Required to link bills to bank operations",
@@ -48,7 +47,18 @@
     }
   },
   "developer": {
-    "name": "Chocobozzz",
-    "url": "https://github.com/Chocobozzz"
+    "name": "Cozy Cloud",
+    "url": "https://cozy.io"
+  },
+  "langs": ["fr"],
+  "locales": {
+    "fr": {
+      "short_description": "Récupérer vos données Oui.sncf dans votre Cozy",
+      "long_description": "Ce fournisseur vous permettra de récupérer l'ensemble de vos factures Oui.sncf dans votre Cozy."
+    },
+    "en": {
+      "short_description": "Fetch your Oui.sncf data in your Cozy",
+      "long_description": "This provider will allow you to fetch all your Oui.sncf bills in your Cozy."
+    }
   }
 }
