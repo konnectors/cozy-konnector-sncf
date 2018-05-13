@@ -12,7 +12,7 @@
   "dependencies": {
     "bluebird": "3.5.1",
     "cozy-konnector-libs": "3.7.4",
-    "moment-timezone": "0.5.14"
+    "moment-timezone": "0.5.17"
   },
   "scripts": {
     "start": "node index.js",
