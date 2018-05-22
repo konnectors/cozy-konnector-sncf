@@ -9,7 +9,6 @@
   "editor": "Cozy",
   "vendor_link": "https://www.oui.sncf",
   "categories": ["transport"],
-  "screenshots": [],
   "fields": {
     "login": {
       "type": "text"
@@ -27,6 +26,7 @@
   "data_types": [
     "bill"
   ],
+  "screenshots": [],
   "permissions": {
     "bank operations": {
       "description": "Required to link bills to bank operations",
