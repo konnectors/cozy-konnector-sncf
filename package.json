@@ -4,32 +4,46 @@
   "description": "",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/cozy/cozy-konnector-sncf.git"
+    "url": "git+https://github.com/konnectors/cozy-konnector-sncf.git"
   },
   "keywords": [],
   "author": "",
   "license": "AGPL-3.0",
-  "dependencies": {
-    "bluebird": "3.5.1",
-    "cozy-konnector-libs": "3.7.4",
-    "moment-timezone": "0.5.17"
+  "main": "./src/index.js",
+  "eslintConfig": {
+    "extends": [
+      "eslint-config-cozy-app"
+    ]
   },
+  "eslintIgnore": [
+    "build"
+  ],
   "scripts": {
-    "start": "node index.js",
-    "dev": "cozy-konnector-dev",
-    "standalone": "cozy-konnector-standalone",
-    "standalone:record": "REPLAY=record cozy-konnector-standalone",
-    "standalone:replay": "REPLAY=replay cozy-konnector-standalone",
+    "start": "node ./src/index.js",
+    "dev": "cozy-run-dev",
+    "standalone": "cozy-run-standalone",
+    "test": "konitor testit .",
+    "check": "konitor check .",
     "build": "webpack",
-    "lint": "standard --fix konnector.js",
+    "precommit": "yarn lint",
+    "lint": "eslint --fix .",
     "deploy": "git-directory-deploy --directory build/ --branch ${DEPLOY_BRANCH:-build} --repo=${DEPLOY_REPOSITORY:-https://$GITHUB_TOKEN@github.com/konnectors/cozy-konnector-sncf.git}",
-    "cozyPublish": "cozy-app-publish --token $REGISTRY_TOKEN --build-commit $(git rev-parse ${DEPLOY_BRANCH:-build})"
+    "cozyPublish": "cozy-app-publish --token $REGISTRY_TOKEN --build-commit $(git rev-parse ${DEPLOY_BRANCH:-build})",
+    "travisDeployKey": "./bin/generate_travis_deploy_key"
+  },
+  "dependencies": {
+    "cozy-konnector-libs": "4.2.0",
+    "moment-timezone": "0.5.17"
   },
   "devDependencies": {
     "copy-webpack-plugin": "4.5.1",
     "cozy-app-publish": "0.3.6",
+    "cozy-jobs-cli": "1.1.0",
+    "eslint": "4.19.1",
+    "eslint-config-cozy-app": "0.7.3",
     "git-directory-deploy": "1.5.1",
-    "standard": "11.0.1",
+    "husky": "0.14.3",
+    "konitor": "0.8.3",
     "webpack": "4.8.3",
     "webpack-cli": "2.1.3"
   }
