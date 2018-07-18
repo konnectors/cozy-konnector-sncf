@@ -107,9 +107,7 @@ async function getCurrentOrders() {
           }/${code}?source=vsa`
         )
 
-        // TKD seems to correspond to ebillet but maybe there are other types of delivery modes
-        // which allow to download a file
-        if ( body.order.trainFolders[code].deliveryMode.type === 'TKD') {
+        if (isThereAPdfTicket(body.order.trainFolders[code])) {
           let creationDate = body.order.trainFolders[code].creationDate
           creationDate = creationDate
             .replace(/-/g, '')
@@ -221,4 +219,13 @@ function parseOrderRow($, $row) {
 
 function getFileName(date, suffix = '') {
   return `${moment(date).format('YYYYMMDD')}${suffix}_sncf.pdf`
+}
+
+function isThereAPdfTicket(trainFolder) {
+  // TKD seems to correspond to ebillet but since I have no access to the api documentation
+  // there might be more cases
+  return (
+    trainFolder.deliveryMode.type === 'TKD' &&
+    trainFolder.ticketlessStatus !== 'FULL'
+  )
 }
