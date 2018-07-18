@@ -1,11 +1,11 @@
 {
-  "version": "1.0.2",
+  "version": "1.0.3",
   "name": "Oui.sncf",
   "type": "konnector",
   "language": "node",
   "icon": "sncf.svg",
   "slug": "sncf",
-  "source": "git://github.com/konnectors/cozy-konnector-sncf.git#build",
+  "source": "git://github.com/konnectors/cozy-konnector-sncf.git",
   "editor": "Cozy",
   "vendor_link": "https://www.oui.sncf",
   "categories": ["transport"],
@@ -61,5 +61,6 @@
       "long_description": "This provider will allow you to fetch all your Oui.sncf bills in your Cozy."
     }
   },
-  "banksTransactionRegExp": "\\bsncf\\b"
+  "banksTransactionRegExp": "\\bsncf\\b",
+  "manifest_version": "2"
 }
