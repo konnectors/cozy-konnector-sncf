@@ -1,4 +1,8 @@
-'use strict'
+// Force sentry DSN into environment variables
+// In the future, will be set by the stack
+process.env.SENTRY_DSN =
+  process.env.SENTRY_DSN ||
+  'https://8f145261a4bd46b9ab2a3b08a4d63d47:66141551cbe848e9ad3b5d6c35022093@sentry.cozycloud.cc/82'
 
 const moment = require('moment-timezone')
 const bluebird = require('bluebird')
