@@ -25,7 +25,7 @@ async function start(fields) {
     jar: true,
     cheerio: false,
     headers: {
-      Accept: '*/*',
+      Accept: '*/*'
     }
   })
   const currentOrders = await getCurrentOrders()
@@ -85,7 +85,6 @@ function getPastOrderPage() {
 }
 
 async function getCurrentOrders() {
-
   log('info', 'Download current orders ...')
   const body = await rq(
     'https://www.oui.sncf/espaceclient/ordersconsultation/getCurrentUserOrders'
