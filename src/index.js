@@ -14,17 +14,20 @@ const {
   requestFactory,
   errors
 } = require('cozy-konnector-libs')
-let rq = requestFactory({
-  // debug: true,
-  cheerio: false,
-  json: true,
-  jar: true
-})
+let rq
 
 module.exports = new BaseKonnector(start)
 
 async function start(fields) {
   await logIn(fields)
+  rq = requestFactory({
+    json: true,
+    jar: true,
+    cheerio: false,
+    headers: {
+      Accept: '*/*',
+    }
+  })
   const currentOrders = await getCurrentOrders()
   const pastOrders = await getPastOrders()
   await saveBills(currentOrders.concat(pastOrders), fields, {
@@ -38,6 +41,12 @@ async function logIn(fields) {
   try {
     // Directly post credentials
     log('info', 'Logging in in SNCF.')
+    rq = requestFactory({
+      // debug: true,
+      cheerio: false,
+      json: false,
+      jar: true
+    })
     const body = await rq.post({
       uri: 'https://www.oui.sncf/espaceclient/authentication/flowSignIn',
       form: {
@@ -76,11 +85,6 @@ function getPastOrderPage() {
 }
 
 async function getCurrentOrders() {
-  rq = requestFactory({
-    json: true,
-    jar: true,
-    cheerio: false
-  })
 
   log('info', 'Download current orders ...')
   const body = await rq(
