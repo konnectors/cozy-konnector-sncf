@@ -9,60 +9,75 @@ const bluebird = require('bluebird')
 
 const {
   log,
-  BaseKonnector,
   saveBills,
-  requestFactory,
+  CookieKonnector,
   errors
 } = require('cozy-konnector-libs')
 let rq
 
-module.exports = new BaseKonnector(start)
-
-async function start(fields) {
-  await logIn(fields)
-  rq = requestFactory({
-    json: true,
-    jar: true,
-    cheerio: false,
-    headers: {
-      Accept: '*/*'
-    }
-  })
-  const currentOrders = await getCurrentOrders()
-  const pastOrders = await getPastOrders()
-  await saveBills(currentOrders.concat(pastOrders), fields, {
-    identifiers: 'SNCF',
-    dateDelta: 10,
-    amountDelta: 0.1
-  })
-}
-
-async function logIn(fields) {
-  try {
-    // Directly post credentials
-    log('info', 'Logging in in SNCF.')
-    rq = requestFactory({
-      // debug: true,
+class SncfConnector extends CookieKonnector {
+  async fetch(fields) {
+    rq = this.requestFactory({
+      debug: true,
       cheerio: false,
       json: false,
       jar: true
     })
-    const body = await rq.post({
-      uri: 'https://www.oui.sncf/espaceclient/authentication/flowSignIn',
-      form: {
-        login: fields.login,
-        password: fields.password
+    if (!(await this.testSession())) {
+      await this.logIn(fields)
+    }
+    rq = this.requestFactory({
+      json: true,
+      jar: true,
+      cheerio: false,
+      headers: {
+        Accept: '*/*'
       }
     })
+    const currentOrders = await getCurrentOrders()
+    rq = this.requestFactory({
+      json: false,
+      jar: true,
+      cheerio: true
+    })
+    const pastOrders = await getPastOrders()
+    await saveBills(currentOrders.concat(pastOrders), fields, {
+      identifiers: 'SNCF',
+      dateDelta: 10,
+      amountDelta: 0.1
+    })
+  }
 
-    if (body && body.error) {
-      log('error', `${body.error.code}: ${body.error.libelle}`)
+  async logIn(fields) {
+    try {
+      // Directly post credentials
+      log('info', 'Logging in in SNCF.')
+      const body = await rq.post({
+        uri: 'https://www.oui.sncf/espaceclient/authentication/flowSignIn',
+        form: {
+          login: fields.login,
+          password: fields.password
+        }
+      })
+
+      if (body && body.error) {
+        log('error', `${body.error.code}: ${body.error.libelle}`)
+        throw new Error(errors.LOGIN_FAILED)
+      }
+    } catch (err) {
+      log('error', err.message)
+      log('info', JSON.stringify(err))
       throw new Error(errors.LOGIN_FAILED)
     }
-  } catch (err) {
-    log('error', err.message)
-    log('info', JSON.stringify(err))
-    throw new Error(errors.LOGIN_FAILED)
+  }
+
+  async testSession() {
+    log('info', 'Test the validity of old session')
+    const resp = await rq({
+      uri: 'https://www.oui.sncf/espaceclient/commandes-en-cours',
+      resolveWithFullResponse: true
+    })
+    return resp.statusCode === 200
   }
 }
 
@@ -72,12 +87,6 @@ async function getPastOrders() {
 }
 
 function getPastOrderPage() {
-  rq = requestFactory({
-    json: false,
-    jar: true,
-    cheerio: true
-  })
-
   log('info', 'Download past orders HTML page...')
   return rq(
     'https://www.oui.sncf/espaceclient/ordersconsultation/showOrdersForAjaxRequest?pastOrder=true&pageToLoad=1'
@@ -236,3 +245,7 @@ function isThereAPdfTicket(trainFolder) {
     trainFolder.ticketlessStatus !== 'FULL'
   )
 }
+
+const connector = new SncfConnector()
+
+connector.run()
