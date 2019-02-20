@@ -18,7 +18,7 @@ let rq
 class SncfConnector extends CookieKonnector {
   async fetch(fields) {
     rq = this.requestFactory({
-      debug: true,
+      //      debug: true,
       cheerio: false,
       json: false,
       jar: true
@@ -59,25 +59,44 @@ class SncfConnector extends CookieKonnector {
           password: fields.password
         }
       })
-
-      if (body && body.error) {
-        log('error', `${body.error.code}: ${body.error.libelle}`)
+      if (body.includes('Authentification incorrecte')) {
+        log('error', `${body}`)
         throw new Error(errors.LOGIN_FAILED)
       }
     } catch (err) {
-      log('error', err.message)
-      log('info', JSON.stringify(err))
-      throw new Error(errors.LOGIN_FAILED)
+      if (err.message === 'LOGIN_FAILED') {
+        throw err
+      } else {
+        log('error', err.message)
+        throw new Error(errors.VENDOR_DOWN)
+      }
     }
   }
 
   async testSession() {
     log('info', 'Test the validity of old session')
-    const resp = await rq({
-      uri: 'https://www.oui.sncf/espaceclient/commandes-en-cours',
-      resolveWithFullResponse: true
-    })
-    return resp.statusCode === 200
+    try {
+      const resp = await rq({
+        uri: 'https://www.oui.sncf/espaceclient/commandes-en-cours',
+        resolveWithFullResponse: true,
+        followRedirect: false,
+        followAllRedirects: false
+      })
+      if (
+        resp.statusCode === 200 &&
+        resp.request.uri.href ===
+          'https://www.oui.sncf/espaceclient/commandes-en-cours'
+      ) {
+        log('info', 'Session valid')
+        return true
+      } else {
+        log('info', 'Session invalid')
+        return false
+      }
+    } catch (err) {
+      log('info', 'Getting error during testing, Session invalid')
+      return false
+    }
   }
 }
 
