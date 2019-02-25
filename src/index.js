@@ -117,7 +117,10 @@ async function getCurrentOrders() {
   const body = await rq(
     'https://www.oui.sncf/espaceclient/ordersconsultation/getCurrentUserOrders'
   )
-
+  if (!body.trainOrderList) {
+    log('error', 'Current Orders malformed')
+    throw new Error(errors.VENDOR_DOWN)
+  }
   // looking for ebillets for each entry
   const entries = await bluebird.mapSeries(
     body.trainOrderList,
@@ -141,8 +144,7 @@ async function getCurrentOrders() {
             trainOrder.owner
           }/${code}?source=vsa`
         )
-
-        if (isThereAPdfTicket(body.order.trainFolders[code])) {
+        if (isThereAPdfTicket(body, code)) {
           let creationDate = body.order.trainFolders[code].creationDate
           creationDate = creationDate
             .replace(/-/g, '')
@@ -256,12 +258,16 @@ function getFileName(date, suffix = '') {
   return `${moment(date).format('YYYYMMDD')}${suffix}_sncf.pdf`
 }
 
-function isThereAPdfTicket(trainFolder) {
+function isThereAPdfTicket(body, code) {
+  // Some rare 'E-billets' are not eligible for PDF
+  if (body.status === 'NOT_ELIGIBLE') {
+    return false
+  }
   // TKD seems to correspond to ebillet but since I have no access to the api documentation
   // there might be more cases
   return (
-    trainFolder.deliveryMode.type === 'TKD' &&
-    trainFolder.ticketlessStatus !== 'FULL'
+    body.order.trainFolders[code].deliveryMode.type === 'TKD' &&
+    body.order.trainFolders[code].ticketlessStatus !== 'FULL'
   )
 }
 
