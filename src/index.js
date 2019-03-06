@@ -6,6 +6,7 @@ process.env.SENTRY_DSN =
 
 const moment = require('moment-timezone')
 const bluebird = require('bluebird')
+const cheerio = require('cheerio')
 
 const {
   log,
@@ -17,6 +18,21 @@ let rq
 
 class SncfConnector extends CookieKonnector {
   async fetch(fields) {
+    try {
+      await this.tryFetch(fields)
+    } catch (err) {
+      if (err.statusCode === 429) {
+        const $ = cheerio.load(err.response.body)
+        log('info', err.response.request.uri.href)
+        log('info', $('.g-recaptcha').data('sitekey'))
+        throw new Error(errors.CAPTCHA_RESOLUTION_FAILED)
+      } else {
+        throw err
+      }
+    }
+  }
+
+  async tryFetch(fields) {
     rq = this.requestFactory({
       //      debug: true,
       cheerio: false,
@@ -66,8 +82,11 @@ class SncfConnector extends CookieKonnector {
     } catch (err) {
       if (err.message === 'LOGIN_FAILED') {
         throw err
+      } else if (err.statusCode === 429) {
+        log('error', 'captcha during login')
+        throw err
       } else {
-        log('error', err.message)
+        log('error', 'error after login')
         throw new Error(errors.VENDOR_DOWN)
       }
     }
