@@ -12,7 +12,8 @@ const {
   log,
   saveBills,
   CookieKonnector,
-  errors
+  errors,
+  solveCaptcha
 } = require('cozy-konnector-libs')
 let rq
 
@@ -23,9 +24,25 @@ class SncfConnector extends CookieKonnector {
     } catch (err) {
       if (err.statusCode === 429) {
         const $ = cheerio.load(err.response.body)
-        log('info', err.response.request.uri.href)
-        log('info', $('.g-recaptcha').data('sitekey'))
-        throw new Error(errors.CAPTCHA_RESOLUTION_FAILED)
+        const websiteKey = $('.g-recaptcha').data('sitekey')
+        const websiteURL = err.response.request.uri.href
+        const captchaToken = await solveCaptcha({ websiteURL, websiteKey })
+        await this.request.post(
+          'https://www.oui.sncf/customer/api/clients/customer/authentication',
+          {
+            'g-recaptcha-response': captchaToken,
+            formname: 'vsccaptcha'
+          }
+        )
+        try {
+          await this.tryFetch(fields)
+        } catch (err) {
+          if (err.statusCode === 429) {
+            throw new Error(errors.CAPTCHA_RESOLUTION_FAILED)
+          } else {
+            throw err
+          }
+        }
       } else {
         throw err
       }
