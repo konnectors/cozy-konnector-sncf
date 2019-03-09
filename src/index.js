@@ -43,7 +43,8 @@ class SncfConnector extends CookieKonnector {
               Referer:
                 'https://www.oui.sncf/customer/api/clients/customer/authentication'
             },
-            followRedirect: false
+            followRedirect: false,
+            followAllRedirects: false
           }
         )
         try {
