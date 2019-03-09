@@ -30,8 +30,20 @@ class SncfConnector extends CookieKonnector {
         await this.request.post(
           'https://www.oui.sncf/customer/api/clients/customer/authentication',
           {
-            'g-recaptcha-response': captchaToken,
-            formname: 'vsccaptcha'
+            form: {
+              'g-recaptcha-response': captchaToken,
+              formname: 'vsccaptcha'
+            },
+            headers: {
+              Accept:
+                'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+              'User-Agent':
+                'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:65.0) Gecko/20100101 Firefox/65.0',
+              'Accept-Language': 'fr,fr-FR;q=0.8,en-US;q=0.5,en;q=0.3',
+              Referer:
+                'https://www.oui.sncf/customer/api/clients/customer/authentication'
+            },
+            followRedirect: false
           }
         )
         try {
@@ -51,7 +63,9 @@ class SncfConnector extends CookieKonnector {
 
   async tryFetch(fields) {
     rq = this.requestFactory({
-      //      debug: true,
+      // debug: ({ strings, type }) => {
+      //   log('info', strings.oneline)
+      // },
       cheerio: false,
       json: false,
       jar: true
