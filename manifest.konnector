@@ -5,7 +5,7 @@
   "language": "node",
   "icon": "sncf.svg",
   "slug": "sncf",
-  "source": "git://github.com/konnectors/cozy-konnector-sncf.git",
+  "source": "git@github.com:konnectors/cozy-konnector-sncf.git",
   "editor": "Cozy",
   "vendor_link": "https://www.oui.sncf",
   "categories": [
