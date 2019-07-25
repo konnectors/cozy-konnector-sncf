@@ -1,11 +1,11 @@
 {
-  "version": "1.6.0",
+  "version": "1.5.2",
   "name": "Oui.sncf",
   "type": "konnector",
   "language": "node",
-  "icon": "sncf.svg",
+  "icon": "icon.svg",
   "slug": "sncf",
-  "source": "git@github.com:konnectors/cozy-konnector-sncf.git",
+  "source": "git://github.com/konnectors/cozy-konnector-sncf.git",
   "editor": "Cozy",
   "vendor_link": "https://www.oui.sncf",
   "categories": [
