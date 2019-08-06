@@ -10,7 +10,6 @@ const cheerio = require('cheerio')
 
 const {
   log,
-  saveBills,
   CookieKonnector,
   errors,
   solveCaptcha
@@ -89,7 +88,7 @@ class SncfConnector extends CookieKonnector {
       cheerio: true
     })
     const pastOrders = await getPastOrders()
-    await saveBills(currentOrders.concat(pastOrders), fields, {
+    await this.saveBills(currentOrders.concat(pastOrders), fields, {
       identifiers: 'SNCF',
       dateDelta: 10,
       amountDelta: 0.1
@@ -250,7 +249,17 @@ function parseOrderPage($) {
       amount: parseFloat(orderInformations.amount),
       vendor: 'VOYAGES SNCF',
       type: 'transport',
-      content: `${orderInformations.label} - ${orderInformations.reference}`
+      content: `${orderInformations.label} - ${orderInformations.reference}`,
+      fileAttributes: {
+        metadata: {
+          classification: 'invoicing',
+          datetime: date.toDate(),
+          datetimeLabel: 'issueDate',
+          contentAuthor: 'sncf',
+          categories: ['transport'],
+          issueDate: date.toDate()
+        }
+      }
     }
 
     if (orderInformations.pdfurl) {
