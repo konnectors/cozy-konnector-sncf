@@ -206,6 +206,16 @@ async function getCurrentOrders() {
             fileurl:
               'https://ebillet.voyages-sncf.com/ticketingServices/public/e-ticket/',
             filename: getFileName(moment(date), '_ebillet'),
+            fileAttributes: {
+              metadata: {
+                classification: 'invoicing',
+                datetime: date.toDate(),
+                datetimeLabel: 'issueDate',
+                contentAuthor: 'sncf',
+                categories: ['transport'],
+                issueDate: date.toDate()
+              }
+            },
             requestOptions: {
               method: 'POST',
               json: true,
@@ -249,23 +259,23 @@ function parseOrderPage($) {
       amount: parseFloat(orderInformations.amount),
       vendor: 'VOYAGES SNCF',
       type: 'transport',
-      content: `${orderInformations.label} - ${orderInformations.reference}`,
-      fileAttributes: {
-        metadata: {
-          classification: 'invoicing',
-          datetime: date.toDate(),
-          datetimeLabel: 'issueDate',
-          contentAuthor: 'sncf',
-          categories: ['transport'],
-          issueDate: date.toDate()
-        }
-      }
+      content: `${orderInformations.label} - ${orderInformations.reference}`
     }
 
     if (orderInformations.pdfurl) {
       Object.assign(bill, {
         fileurl: orderInformations.pdfurl,
-        filename: getFileName(date)
+        filename: getFileName(date),
+        fileAttributes: {
+          metadata: {
+            classification: 'invoicing',
+            datetime: date.toDate(),
+            datetimeLabel: 'issueDate',
+            contentAuthor: 'sncf',
+            categories: ['transport'],
+            issueDate: date.toDate()
+          }
+        }
       })
     }
     result.push(bill)
