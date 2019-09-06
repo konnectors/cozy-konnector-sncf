@@ -3,10 +3,11 @@ node_js:
 - '8'
 env:
   global:
-  - GH_USER_EMAIL="travis@example.org"
-  - GH_USER_NAME="cozy-bot"
   - DEPLOY_REPOSITORY="git@github.com:konnectors/cozy-konnector-sncf.git"
+  # REGISTRY_TOKEN(editor=cozy, app=sncf)
   - secure: E7DVcVX2H56jXk4gfYTnh/sCIeavZrwMjvLZXRl4AFzgSTUZmFXe1xAKHo0QPYtIuVpgAvJTNFgXob7mWf4EofLo0QrNz3vPk3jn5IG0OGuF4t5TB9BtlLgT/oS20Z89nLR/OBfEPihcmobw9BAahSd8wFuI1d/29dyTwNhA5m0axYNWUuxn1fTS2p35nO+eh2QPDD7kmlES8OwZW32U8hMRJ1rHmzT5/Ph28Y1XR14XB6fjK9jty3m822RcglfzgPGDCDpx7fMh1PgBV9G7kcyjPloAwSmmY9QVujaRFdw0cAXKXCFKsNq1TVav6SghrW20hKJbGKKCM1/NzmzaW6OXspLO7szHfdgsDIZa31tCS8KRpakWNFEyV4wbxE5y54FKxMcAojh8uLDeMLD1dW1oZAhcp345Bgj7EeVklN9y1fX4LFQib/JTKhK1cG0NRGDMQ9BiwERYkxx9S+3xhP9IugF0l908cG3klSJuKL6rLyugQxdvxANEEO4QC2+63XpYVRf1qMSLbhbFWQf2QffXoEIZHX8Yzc96Uscv8zDXyH4i9CI5wIgDVpIId7CINOSxq3GqLM+1SpRYY8PgtrhzCWSOpWBnAESxGT15ZbOfRBqEEGU7uu8e6b6Kxcjx9eqq7Xj1Dp7Ixcqj+MUAzpoA+eD5MoR6eK+fuuanXDY=
+  # MATTERMOST_HOOK_URL
+  - secure: MqQHprHSo6lPr5wxjKcWQH9pkCLZgchEGqoCUb54RbnlQlRaGc85AYUK2XjIbbkF4izu8N3VEVcOfqBvMEkFiDx/YzuDPMdKzFmR4mlO8dWIURfs5c+T4Dv7bPUdOhVyaA/t2S0bCNzTHg7JmyNisbWY59w08CS72FbLntxHcScTeuVVi0X/+onnWVts63UWPDg5hv2ujtGMd3V55kK4XPVNkjomOI10xObnKQf8/74ylnaOOwIepS04QlwSwzSUocLKzH3Tp8WRQLpzXRKcn5QwWA1PK0kN375ni+ez+7joYjx2CLVP+G53XSpM7g+PJxX2+N51giUikkWIcV4rtSnouwFdiHS8ZDxIQ12cggLow8UmDu74x+BC4aYWi13nKY8rHEXhNT29N6wabj58R/0ffTxKHTHG4ZoEUfEhaJTPz2Hirg4BUhmQ3WUWAqXcHEVQ1NO2sLZSfSkgw04sejbJ8sZU8W+UwchumC52KcC5A2h1Kb81kcjNBNuqxC3fb9qTNShaODNAdRYYhxMctLcxV9QdW5VyNhYCjj0EQV7bUdNd1vYLCTrRccdK7uB9/LHtHEe305cHH5UjHl/7Bpr1ya2Y7o6gCHnZ8EVr/O/VnupAgAk6oN7lRaOkoYJr18tuFcWW9EzaMZ8wByasx89toB9Zc6bJX/NFu/aSONs=
 cache:
   yarn: true
   directories:
@@ -18,7 +19,6 @@ branches:
 script:
 - yarn lint
 - yarn build
-- yarn run check
 deploy:
 - provider: script
   skip-cleanup: true
@@ -27,7 +27,7 @@ deploy:
     branch: master
 - provider: script
   skip-cleanup: true
-  script: DEPLOY_BRANCH=build yarn deploy && yarn cozyPublish
+  script: DEPLOY_BRANCH=build yarn deploy && yarn cozyPublish --postpublish mattermost
   on:
     tags: true
 before_install:
