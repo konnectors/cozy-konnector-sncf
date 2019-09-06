@@ -63,9 +63,6 @@ class SncfConnector extends CookieKonnector {
 
   async tryFetch(fields) {
     rq = this.requestFactory({
-      // debug: ({ strings, type }) => {
-      //   log('info', strings.oneline)
-      // },
       cheerio: false,
       json: false,
       jar: true
@@ -118,6 +115,7 @@ class SncfConnector extends CookieKonnector {
         throw err
       } else {
         log('error', 'error after login')
+        log('error', `${err.statusCode}: ${err.message}`)
         throw new Error(errors.VENDOR_DOWN)
       }
     }
@@ -209,11 +207,11 @@ async function getCurrentOrders() {
             fileAttributes: {
               metadata: {
                 classification: 'invoicing',
-                datetime: date.toDate(),
+                datetime: date,
                 datetimeLabel: 'issueDate',
                 contentAuthor: 'sncf',
                 categories: ['transport'],
-                issueDate: date.toDate()
+                issueDate: date
               }
             },
             requestOptions: {
