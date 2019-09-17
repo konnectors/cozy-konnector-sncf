@@ -180,17 +180,13 @@ async function getCurrentOrders() {
         amount: trainOrder.amount,
         vendor: 'VOYAGES SNCF',
         type: 'transport',
-        content: `${trainOrder.originLabel}/${
-          trainOrder.destinationLabel
-        } - ${code}`
+        content: `${trainOrder.originLabel}/${trainOrder.destinationLabel} - ${code}`
       }
 
       if (trainOrder.deliveryMode !== 'EADN') {
         // délivré par courrier
         const body = await rq(
-          `https://www.oui.sncf/vsa/api/order/fr_FR/${
-            trainOrder.owner
-          }/${code}?source=vsa`
+          `https://www.oui.sncf/vsa/api/order/fr_FR/${trainOrder.owner}/${code}?source=vsa`
         )
         if (isThereAPdfTicket(body, code)) {
           let creationDate = body.order.trainFolders[code].creationDate
