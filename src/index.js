@@ -1,5 +1,3 @@
-// Force sentry DSN into environment variables
-// In the future, will be set by the stack
 process.env.SENTRY_DSN =
   process.env.SENTRY_DSN ||
   'https://8f145261a4bd46b9ab2a3b08a4d63d47:66141551cbe848e9ad3b5d6c35022093@sentry.cozycloud.cc/82'
@@ -14,7 +12,6 @@ const {
   errors,
   solveCaptcha
 } = require('cozy-konnector-libs')
-let rq
 
 class SncfConnector extends CookieKonnector {
   async fetch(fields) {
@@ -55,6 +52,12 @@ class SncfConnector extends CookieKonnector {
             throw err
           }
         }
+      } else if (err.message === 'VENDOR_DOWN') {
+        try {
+          await this.tryFetch(fields)
+        } catch (err) {
+          throw err
+        }
       } else {
         throw err
       }
@@ -62,33 +65,16 @@ class SncfConnector extends CookieKonnector {
   }
 
   async tryFetch(fields) {
-    rq = this.requestFactory({
-      cheerio: false,
-      json: false,
-      jar: true
-    })
     if (!(await this.testSession())) {
       await this.logIn(fields)
     }
-    rq = this.requestFactory({
-      json: true,
-      jar: true,
-      cheerio: false,
-      headers: {
-        Accept: '*/*'
-      }
-    })
-    const currentOrders = await getCurrentOrders()
-    rq = this.requestFactory({
-      json: false,
-      jar: true,
-      cheerio: true
-    })
-    const pastOrders = await getPastOrders()
+    const currentOrders = await this.getCurrentOrders()
+    const pastOrders = await this.getPastOrders()
     await this.saveBills(currentOrders.concat(pastOrders), fields, {
-      identifiers: 'SNCF',
       dateDelta: 10,
-      amountDelta: 0.1
+      amountDelta: 0.1,
+      linkBankOperations: false,
+      fileIdAttributes: ['vendorRef', 'date', 'amount']
     })
   }
 
@@ -96,15 +82,44 @@ class SncfConnector extends CookieKonnector {
     try {
       // Directly post credentials
       log('info', 'Logging in in SNCF.')
-      const body = await rq.post({
+      await this.request.get('https://www.oui.sncf')
+      this._jar._jar.setCookieSync(
+        'has_js=1; domain=www.oui.sncf',
+        'https://www.oui.sncf',
+        {}
+      )
+      await this.request.get(
+        'https://www.oui.sncf/booking/samref/han-discount-cards?uc=fr-FR'
+      )
+
+      await this.request.post(
+        'https://www.oui.sncf/customer/api/clients/customer/authentication',
+        {
+          json: true,
+          body: {
+            email: fields.login
+          }
+        }
+      )
+      const resp = await this.request.post({
         uri: 'https://www.oui.sncf/espaceclient/authentication/flowSignIn',
         form: {
           login: fields.login,
-          password: fields.password
-        }
+          password: fields.password,
+          lang: 'fr'
+        },
+        json: false,
+        resolveWithFullResponse: true
       })
-      if (body.includes('Authentification incorrecte')) {
-        log('error', `${body}`)
+
+      if (
+        resp.request.uri.href ===
+        'https://www.oui.sncf/espaceclient/page-erreur-technique'
+      ) {
+        await this.saveSession()
+        throw new Error(errors.VENDOR_DOWN)
+      } else if (resp.body.includes('Authentification incorrecte')) {
+        log('error', `${resp.body}`)
         throw new Error(errors.LOGIN_FAILED)
       }
     } catch (err) {
@@ -116,15 +131,23 @@ class SncfConnector extends CookieKonnector {
       } else {
         log('error', 'error after login')
         log('error', `${err.statusCode}: ${err.message}`)
+        await this.saveSession()
         throw new Error(errors.VENDOR_DOWN)
       }
     }
   }
 
   async testSession() {
+    if (!this._jar._jar.toJSON().cookies.length) {
+      return false
+    }
+    const request = this.requestFactory({
+      cheerio: false,
+      json: false
+    })
     log('info', 'Test the validity of old session')
     try {
-      const resp = await rq({
+      const resp = await request({
         uri: 'https://www.oui.sncf/espaceclient/commandes-en-cours',
         resolveWithFullResponse: true,
         followRedirect: false,
@@ -146,97 +169,109 @@ class SncfConnector extends CookieKonnector {
       return false
     }
   }
-}
 
-async function getPastOrders() {
-  const $ = await getPastOrderPage()
-  return parseOrderPage($)
-}
-
-function getPastOrderPage() {
-  log('info', 'Download past orders HTML page...')
-  return rq(
-    'https://www.oui.sncf/espaceclient/ordersconsultation/showOrdersForAjaxRequest?pastOrder=true&pageToLoad=1'
-  )
-}
-
-async function getCurrentOrders() {
-  log('info', 'Download current orders ...')
-  const body = await rq(
-    'https://www.oui.sncf/espaceclient/ordersconsultation/getCurrentUserOrders'
-  )
-  if (!body.trainOrderList) {
-    log('error', 'Current Orders malformed')
-    throw new Error(errors.VENDOR_DOWN)
+  async getPastOrders() {
+    const $ = await this.getPastOrderPage()
+    return parseOrderPage($)
   }
-  // looking for ebillets for each entry
-  const entries = await bluebird.mapSeries(
-    body.trainOrderList,
-    async trainOrder => {
-      const code = Object.keys(trainOrder.pnrsAndReceipt).pop()
-      const date = new Date(trainOrder.outwardDate)
-      let entry = {
-        date,
-        amount: trainOrder.amount,
-        vendor: 'VOYAGES SNCF',
-        type: 'transport',
-        content: `${trainOrder.originLabel}/${trainOrder.destinationLabel} - ${code}`
+
+  getPastOrderPage() {
+    this.request = this.requestFactory({
+      json: false,
+      cheerio: true
+    })
+    log('info', 'Download past orders HTML page...')
+    return this.request(
+      'https://www.oui.sncf/espaceclient/ordersconsultation/showOrdersForAjaxRequest?pastOrder=true&pageToLoad=1'
+    )
+  }
+
+  async getCurrentOrders() {
+    this.request = this.requestFactory({
+      json: true,
+      cheerio: false,
+      headers: {
+        Accept: '*/*'
       }
-
-      if (trainOrder.deliveryMode !== 'EADN') {
-        // délivré par courrier
-        const body = await rq(
-          `https://www.oui.sncf/vsa/api/order/fr_FR/${trainOrder.owner}/${code}?source=vsa`
-        )
-        if (isThereAPdfTicket(body, code)) {
-          let creationDate = body.order.trainFolders[code].creationDate
-          creationDate = creationDate
-            .replace(/-/g, '')
-            .replace(/T/g, '')
-            .replace(/:/g, '')
-          creationDate = creationDate.substr(0, creationDate.length - 2)
-
-          Object.assign(entry, {
-            fileurl:
-              'https://ebillet.voyages-sncf.com/ticketingServices/public/e-ticket/',
-            filename: getFileName(moment(date), '_ebillet'),
-            fileAttributes: {
-              metadata: {
-                classification: 'invoicing',
-                datetime: date,
-                datetimeLabel: 'issueDate',
-                contentAuthor: 'sncf',
-                categories: ['transport'],
-                issueDate: date
-              }
-            },
-            requestOptions: {
-              method: 'POST',
-              json: true,
-              headers: {
-                Accept: 'application/json, text/plain, */*'
-              },
-              body: {
-                lang: 'FR',
-                pnrRefs: [
-                  {
-                    pnrLocator: code,
-                    creationDate: creationDate,
-                    passengerName: trainOrder.owner
-                  }
-                ],
-                market: 'VSC',
-                caller: 'VSA_FR'
-              }
-            }
-          })
+    })
+    log('info', 'Download current orders ...')
+    const body = await this.request(
+      'https://www.oui.sncf/espaceclient/ordersconsultation/getCurrentUserOrders'
+    )
+    if (!body.trainOrderList) {
+      log('error', 'Current Orders malformed')
+      throw new Error(errors.VENDOR_DOWN)
+    }
+    // looking for ebillets for each entry
+    const entries = await bluebird.mapSeries(
+      body.trainOrderList,
+      async trainOrder => {
+        const code = Object.keys(trainOrder.pnrsAndReceipt).pop()
+        const date = new Date(trainOrder.outwardDate)
+        let entry = {
+          date,
+          vendorRef: code,
+          amount: trainOrder.amount,
+          vendor: 'VOYAGES SNCF',
+          type: 'transport',
+          content: `${trainOrder.originLabel}/${trainOrder.destinationLabel} - ${code}`
         }
 
-        return entry
+        if (trainOrder.deliveryMode !== 'EADN') {
+          // délivré par courrier
+          const body = await this.request(
+            `https://www.oui.sncf/vsa/api/order/fr_FR/${trainOrder.owner}/${code}?source=vsa`
+          )
+          if (isThereAPdfTicket(body, code)) {
+            let creationDate = body.order.trainFolders[code].creationDate
+            creationDate = creationDate
+              .replace(/-/g, '')
+              .replace(/T/g, '')
+              .replace(/:/g, '')
+            creationDate = creationDate.substr(0, creationDate.length - 2)
+
+            Object.assign(entry, {
+              fileurl:
+                'https://ebillet.voyages-sncf.com/ticketingServices/public/e-ticket/',
+              filename: getFileName(moment(date), '_ebillet'),
+              fileAttributes: {
+                metadata: {
+                  classification: 'invoicing',
+                  datetime: date,
+                  datetimeLabel: 'issueDate',
+                  contentAuthor: 'sncf',
+                  categories: ['transport'],
+                  issueDate: date
+                }
+              },
+              requestOptions: {
+                method: 'POST',
+                json: true,
+                headers: {
+                  Accept: 'application/json, text/plain, */*'
+                },
+                body: {
+                  lang: 'FR',
+                  pnrRefs: [
+                    {
+                      pnrLocator: code,
+                      creationDate: creationDate,
+                      passengerName: trainOrder.owner
+                    }
+                  ],
+                  market: 'VSC',
+                  caller: 'VSA_FR'
+                }
+              }
+            })
+          }
+
+          return entry
+        }
       }
-    }
-  )
-  return entries
+    )
+    return entries
+  }
 }
 
 function parseOrderPage($) {
@@ -251,6 +286,7 @@ function parseOrderPage($) {
     const bill = {
       date: date.toDate(),
       amount: parseFloat(orderInformations.amount),
+      vendorRef: orderInformations.reference,
       vendor: 'VOYAGES SNCF',
       type: 'transport',
       content: `${orderInformations.label} - ${orderInformations.reference}`
@@ -335,6 +371,10 @@ function isThereAPdfTicket(body, code) {
   )
 }
 
-const connector = new SncfConnector()
+const connector = new SncfConnector({
+  // debug: true,
+  cheerio: false,
+  json: true
+})
 
 connector.run()
