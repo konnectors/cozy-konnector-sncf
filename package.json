@@ -37,7 +37,7 @@
   },
   "dependencies": {
     "cozy-konnector-libs": "4.34.4",
-    "moment-timezone": "0.5.28"
+    "moment-timezone": "0.5.31"
   },
   "devDependencies": {
     "copy-webpack-plugin": "5.1.1",
