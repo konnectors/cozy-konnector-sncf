@@ -35,7 +35,7 @@
     "travisDeployKey": "./bin/generate_travis_deploy_key"
   },
   "dependencies": {
-    "cozy-konnector-libs": "4.36.0",
+    "cozy-konnector-libs": "4.37.0",
     "moment-timezone": "0.5.31"
   },
   "devDependencies": {
