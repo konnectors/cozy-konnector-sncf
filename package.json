@@ -39,7 +39,7 @@
     "moment-timezone": "0.5.34"
   },
   "devDependencies": {
-    "cozy-jobs-cli": "1.16.6",
+    "cozy-jobs-cli": "1.17.5",
     "cozy-konnector-build": "1.2.3"
   }
 }
