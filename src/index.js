@@ -53,11 +53,7 @@ class SncfConnector extends CookieKonnector {
           }
         }
       } else if (err.message === 'VENDOR_DOWN') {
-        try {
-          await this.tryFetch(fields)
-        } catch (err) {
-          throw err
-        }
+        await this.tryFetch(fields)
       } else {
         throw err
       }
@@ -321,9 +317,7 @@ function parseOrderRow($, $row) {
   const label = $row
     .find('.order__top .texte--insecable')
     .map(function mapRow() {
-      return $(this)
-        .text()
-        .trim()
+      return $(this).text().trim()
     })
     .get()
     .join('/')
