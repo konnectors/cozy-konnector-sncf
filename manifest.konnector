@@ -1,13 +1,13 @@
 {
-  "version": "1.0.0",
-  "name": "Template",
+  "version": "2.0.0",
+  "name": "Oui.sncf",
   "type": "konnector",
   "language": "node",
   "icon": "icon.svg",
-  "slug": "template",
-  "source": "git@github.com:konnectors/template_ccc.git",
+  "slug": "sncf",
+  "source": "git@github.com:konnectors/cozy-konnector-sncf.git",
   "editor": "Cozy",
-  "vendor_link": "https://books.toscrape.com/",
+  "vendor_link": "https://sncf-connect.com/",
   "categories": [
     "transport"
   ],
@@ -21,26 +21,64 @@
       "defaultDir": "$administrative/$konnector/$account"
     }
   ],
-  "permissions": {
+    "permissions": {
     "bills": {
       "type": "io.cozy.bills"
     },
     "files": {
       "type": "io.cozy.files"
+    },
+    "carbon_copy": {
+      "type": "io.cozy.certified.carbon_copy"
+    },
+    "identities": {
+      "type": "io.cozy.identities"
     }
   },
   "locales": {
     "fr": {
-      "short_description": "Récupère la liste de livres",
-      "long_description": "Récupère la liste de livre sur le site exemple",
+      "short_description": "Récupère vos factures SNCF.",
+      "long_description": "Récupère vos factures SNCF.",
       "permissions": {
+        "carboncopy": {
+          "description": "Utilisé pour certifier que vos fichiers sont copie conforme avec les documents d'origine"
+        },
         "bills": {
           "description": "Utilisé pour sauver les données des factures"
         },
         "files": {
           "description": "Utilisé pour sauvegarder les factures"
+        },
+        "identities": {
+          "description": "Utilisé pour sauvegarder l'identité de l'utilisateur"
+        }
+      }
+    },
+    "en": {
+      "short_description": "Fetch a list of SNCF invoices.",
+      "long_description": "Fetch a list of SNCF invoices.",
+      "permissions": {
+        "carboncopy": {
+          "description": "Required for carbon copy documents"
+        },
+        "bills": {
+          "description": "Required to save the bills data"
+        },
+        "files": {
+          "description": "Required to save the bills"
+        },
+        "identities": {
+          "description": "Required to save the user identity"
         }
       }
     }
-  }
+  },
+  "qualification_labels": [
+    "transport_invoice"
+  ],
+  "features": [
+    "METADATA_DEDUP",
+    "CARBON_COPY",
+    "DOC_QUALIFICATION_V2"
+  ]
 }
