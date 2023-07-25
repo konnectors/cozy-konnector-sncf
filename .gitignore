@@ -1,9 +1,3 @@
-# Connector config
-.account
-.token.json
-konnector-dev-config.json*
-data/*
-
 # NPM
 node_modules/
 npm-debug.log
@@ -22,7 +16,6 @@ ehthumbs.db
 Thumbs.db
 desktop.ini
 
-
 # Editors / IDEs
 .floo
 .flooignore
@@ -31,5 +24,3 @@ desktop.ini
 # Default
 # /!\ KEEP THIS SECTION THE LAST ONE
 !.gitkeep
-
-fixtures/*
