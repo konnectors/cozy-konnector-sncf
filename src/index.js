@@ -5,7 +5,8 @@ import { format } from 'date-fns'
 const log = Minilog('ContentScript')
 Minilog.enable('sncfCCC')
 
-const baseUrl = 'https://sncf-connect.com'
+// Keep this around in case it's needed later
+// const baseUrl = 'https://sncf-connect.com'
 const preLoginPage = 'https://www.sncf-connect.com/app/account'
 
 let jsonTrips = []
@@ -48,9 +49,9 @@ class SncfContentScript extends ContentScript {
   async ensureAuthenticated({ account }) {
     this.bridge.addEventListener('workerEvent', this.onWorkerEvent.bind(this))
     this.log('info', '🤖 ensureAuthenticated')
-    // if (!account) {
-    //   await this.ensureNotAuthenticated()
-    // }
+    if (!account) {
+      await this.ensureNotAuthenticated()
+    }
     // we need to reach the preLogin page to know if we're already connected before reaching the loginForm
     await this.goto(preLoginPage)
     await Promise.race([
@@ -61,27 +62,54 @@ class SncfContentScript extends ContentScript {
     ])
     const authenticated = await this.runInWorker('checkAuthenticated')
     if (!authenticated) {
-      await this.navigateToLoginForm()
-      this.log('info', 'Not authenticated')
-      await this.showLoginFormAndWaitForAuthentication()
-      if (await this.isElementInWorker('#otpCode')) {
-        this.log('info', 'waiting for user inputs for OTP code')
-        await this.runInWorkerUntilTrue({
-          method: 'waitForOtpCode'
-        })
+      const credentials = await this.getCredentials()
+      if (credentials && credentials.email && credentials.password) {
+        try {
+          await this.navigateToLoginForm()
+          await this.waitForElementInWorker('#login')
+          await this.tryAutoLogin(credentials)
+          await this.runInWorkerUntilTrue({
+            method: 'autoLoginCheckAuthenticated'
+          })
+          return true
+        } catch (error) {
+          this.log('warn', 'autoLogin error' + error.message)
+          await this.showLoginFormAndWaitForAuthentication()
+          return true
+        }
+      } else {
+        await this.navigateToLoginForm()
+        this.log('info', 'Not authenticated')
+        await this.showLoginFormAndWaitForAuthentication()
+        if (await this.isElementInWorker('#otpCode')) {
+          this.log('info', 'waiting for user inputs for OTP code')
+          await this.runInWorkerUntilTrue({
+            method: 'waitForOtpCode'
+          })
+        }
       }
+      this.unblockWorkerInteractions()
     }
-    this.unblockWorkerInteractions()
     return true
   }
 
   async ensureNotAuthenticated() {
     this.log('info', '🤖 ensureNotAuthenticated')
-    await this.navigateToLoginForm()
+    await this.goto(preLoginPage)
+    await Promise.race([
+      this.waitForElementInWorker(
+        'button[data-test="account-disconnect-button"]'
+      ),
+      this.waitForElementInWorker('.MuiCardContent-root > div > button')
+    ])
     const authenticated = await this.runInWorker('checkAuthenticated')
     if (!authenticated) {
       return true
     }
+    await this.clickAndWait(
+      'button[data-test="account-disconnect-button"]',
+      '.MuiCardContent-root > div > button'
+    )
     return true
   }
 
@@ -96,6 +124,21 @@ class SncfContentScript extends ContentScript {
     if (error) {
       this.bridge.emit('workerEvent', 'loginError', { msg: error.innerHTML })
     }
+  }
+
+  async tryAutoLogin(credentials) {
+    this.log('info', 'tryAutoLogin starts')
+    await this.autoLogin(credentials)
+  }
+
+  async autoLogin(credentials) {
+    this.log('info', 'autoLogin starts')
+    const emailSelector = '#login'
+    const passwordSelector = '#pass1'
+    const buttonSelector = '#validate'
+    await this.runInWorker('fillText', emailSelector, credentials.email)
+    await this.runInWorker('fillText', passwordSelector, credentials.password)
+    await this.runInWorker('click', buttonSelector)
   }
 
   async checkAuthenticated() {
@@ -118,10 +161,32 @@ class SncfContentScript extends ContentScript {
       await this.waitForOtpCode()
       return true
     }
-
     return Boolean(
       document.querySelector('button[data-test="account-disconnect-button"]')
     )
+  }
+
+  async autoLoginCheckAuthenticated() {
+    this.log('info', 'autoLoginCheckauthenticated starts')
+    await waitFor(
+      () => {
+        return Boolean(
+          document.querySelector(
+            'button[data-test="account-disconnect-button"]'
+          )
+        )
+      },
+      {
+        interval: 1000,
+        timeout: {
+          milliseconds: 30000,
+          message: new TimeoutError(
+            'autoLoginCheckAuthenticated timed out after 30000ms'
+          )
+        }
+      }
+    )
+    return true
   }
 
   async findAndSendCredentials(loginField, passwordField) {
@@ -165,7 +230,7 @@ class SncfContentScript extends ContentScript {
     if (this.store.userCredentials) {
       await this.saveCredentials(this.store.userCredentials)
     }
-    await this.saveIdentity(this.store.userIdentity)
+    await this.saveIdentity({ contact: this.store.userIdentity })
     await this.navigateToBillsPage()
     await this.runInWorkerUntilTrue({
       method: 'waitForInterception'
@@ -482,7 +547,8 @@ connector
       'findAndClickInfosButton',
       'getIdentity',
       'getBills',
-      'waitForInterception'
+      'waitForInterception',
+      'autoLoginCheckAuthenticated'
     ]
   })
   .catch(err => {
