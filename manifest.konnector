@@ -1,6 +1,6 @@
 {
-  "version": "2.1.0",
-  "name": "SNCF Connect",
+  "version": "2.2.0",
+  "name": "Oui.sncf",
   "type": "konnector",
   "language": "node",
   "icon": "icon.svg",
@@ -42,7 +42,7 @@
   "locales": {
     "fr": {
       "short_description": "Récupère vos factures SNCF.",
-      "long_description": "SNCF Connect est le site de la Société Nationale des Chemin de Fer français pour les trajets en train accessible sur [https://www.sncf-connect.com](https://www.sncf-connect.com).\n\n<br>**Connectez votre compte SNCF à votre Cozy pour**\n\n- récupérer vos justificatifs de voyage\n\n<br>**A noter**\n\n Certains voyages ne possèdent pas de justificatifs, aucun document ne sera téléchargé pour ceux-ci.\n\n<br>**Accédez directement à vos documents dans votre Drive personnel**\n\nEn connectant votre compte SNCF, votre Cozy crée automatiquement un dossier dans **Drive > Administratif > SNCF**. Vos justificatifs de voyage sont à portée de main et toujours accessibles !\n\n<br>**Suivez le montant de vos remboursements avec Banks**\n\nLes justificatifs de voyage récupérées sont automatiquement liées aux opérations bancaires SNCF associées à votre compte si vous utilisez l’application Banks. Finis les maux de tête à faire les comptes !\n\n<br>**Sauvegardez vos identifiants avec pass**\n\nEn installant le gestionnaire de mots de passe, vos identifiants sont sauvegardés une bonne fois pour toutes pour vous faciliter la connexion au site de la SNCF. Adieu les mots de passe oubliés !\n\n<br>**Configuration**\n\nPour connecter votre compte, il vous suffit d'utiliser votre application mobile Cozy et de vous connecter au service à l'aide de vos identifiants SNCF.\n\nUne fois connecté, vous pourrez relancer dès que vous le souhaitez votre service pour récupérer les nouveaux éléments et les historiser dans un dossier SNCF dans Drive.</p><p>Si vous déconnectez votre compte SNCF, les informations déjà sauvegardées dans votre Cozy restent disponibles. Vous pouvez les supprimer manuellement par ailleurs.",
+      "long_description": "Récupère vos factures SNCF.",
       "permissions": {
         "carboncopy": {
           "description": "Utilisé pour certifier que vos fichiers sont copie conforme avec les documents d'origine"
